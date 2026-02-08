@@ -5,6 +5,7 @@ import * as assert from 'assert';
 import * as vscode from 'vscode';
 import {
 	parseCommitHeader,
+	parseUntrackedFilesFromPorcelainV1,
 	validateCommitMessage,
 } from '../core';
 
@@ -53,5 +54,20 @@ suite('Extension Test Suite', () => {
 			maxSubjectLength: 80,
 		});
 		assert.strictEqual(res.ok, false);
+	});
+
+	test('parseUntrackedFilesFromPorcelainV1: extracts ?? paths (including spaces)', () => {
+		const status = [
+			' M src/core.ts',
+			'?? new-file.ts',
+			'?? folder with spaces/file name.txt',
+			'?? dir/',
+		].join('\n');
+
+		assert.deepStrictEqual(parseUntrackedFilesFromPorcelainV1(status), [
+			'new-file.ts',
+			'folder with spaces/file name.txt',
+			'dir/',
+		]);
 	});
 });

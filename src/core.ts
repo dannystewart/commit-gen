@@ -53,7 +53,7 @@ export async function runGenerateCommitMessageCommand(): Promise<void> {
 	closeActiveNotification();
 	await vscode.window.withProgress(
 		{
-			location: vscode.ProgressLocation.Notification,
+			location: vscode.ProgressLocation.SourceControl,
 			title: 'Commit Gen',
 			cancellable: false,
 		},
@@ -418,14 +418,70 @@ export async function getGitContext(cwd: string, maxDiffChars: number): Promise<
 
 	const status = await execGit(['status', '--porcelain=v1'], cwd);
 	const stagedDiff = await execGit(['diff', '--staged', '--no-color'], cwd);
-	const workingDiff = stagedDiff.trim().length === 0 ? await execGit(['diff', '--no-color'], cwd) : '';
-
 	const usingWorking = stagedDiff.trim().length === 0;
-	const diffToUse = usingWorking ? workingDiff : stagedDiff;
+
+	const workingDiff = usingWorking ? await execGit(['diff', '--no-color'], cwd) : '';
+	const untrackedDiff = usingWorking ? await buildUntrackedDiff({ cwd, statusPorcelainV1: status }) : '';
+
+	const diffToUse = usingWorking ? [workingDiff, untrackedDiff].filter(Boolean).join('\n') : stagedDiff;
 	const trimmedDiff = truncateMiddle(diffToUse, maxDiffChars);
 	const statusSummary = status.trim() || '(clean)';
 
 	return { diff: trimmedDiff, statusSummary, diffKind: usingWorking ? 'working' : 'staged' };
+}
+
+export function parseUntrackedFilesFromPorcelainV1(statusPorcelainV1: string): string[] {
+	// `git status --porcelain=v1` lines:
+	// - Untracked file: "?? path"
+	// Paths may include spaces; everything after the prefix is part of the path.
+	const out: string[] = [];
+	for (const rawLine of statusPorcelainV1.split('\n')) {
+		const line = rawLine.trimEnd();
+		if (!line.startsWith('?? ')) {
+			continue;
+		}
+		const p = line.slice(3).trim();
+		if (p) {
+			out.push(p);
+		}
+	}
+	return out;
+}
+
+async function buildUntrackedDiff(opts: { cwd: string; statusPorcelainV1: string }): Promise<string> {
+	const untracked = parseUntrackedFilesFromPorcelainV1(opts.statusPorcelainV1);
+	if (untracked.length === 0) {
+		return '';
+	}
+
+	// `git status` may show an untracked directory as "?? dir/". In that case, ask git for
+	// the actual untracked files underneath.
+	const expanded: string[] = [];
+	for (const p of untracked) {
+		if (p.endsWith('/')) {
+			const childrenNul = await execGit(['ls-files', '--others', '--exclude-standard', '-z', '--', p], opts.cwd);
+			for (const child of childrenNul.split('\0')) {
+				if (child) {
+					expanded.push(child);
+				}
+			}
+		} else {
+			expanded.push(p);
+		}
+	}
+
+	const diffs: string[] = [];
+	for (const p of expanded) {
+		// `--no-index` uses diff-like exit codes (1 = differences). Allow that.
+		const d = await execGit(['diff', '--no-color', '--no-index', '--', '/dev/null', p], opts.cwd, {
+			allowExitCode1: true,
+		});
+		if (d.trim()) {
+			diffs.push(d.trimEnd());
+		}
+	}
+
+	return diffs.join('\n\n');
 }
 
 async function isGitRepo(cwd: string): Promise<boolean> {
@@ -440,12 +496,15 @@ async function isGitRepo(cwd: string): Promise<boolean> {
 	}
 }
 
-async function execGit(args: string[], cwd: string): Promise<string> {
+async function execGit(args: string[], cwd: string, opts?: { allowExitCode1?: boolean }): Promise<string> {
 	try {
 		const result = await execFileAsync('git', args, { cwd, maxBuffer: 20 * 1024 * 1024 });
 		return result.stdout ?? '';
 	} catch (err) {
-		const e = err as { stdout?: string; stderr?: string; message?: string };
+		const e = err as { stdout?: string; stderr?: string; message?: string; code?: number };
+		if (opts?.allowExitCode1 && e.code === 1) {
+			return e.stdout ?? '';
+		}
 		const stderr = (e.stderr ?? '').trim();
 		const msg = stderr || e.message || 'git command failed';
 		throw new UserFacingError(`git ${args.join(' ')} failed: ${msg}`);
