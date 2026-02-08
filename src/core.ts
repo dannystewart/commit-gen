@@ -52,28 +52,76 @@ const DEFAULT_RULES: CommitGenRules = {
 };
 
 export async function runGenerateCommitMessageCommand(): Promise<void> {
-	const folder = getBestWorkspaceFolder();
-	if (!folder) {
-		throw new UserFacingError('Open a folder/workspace first (Commit Gen needs a workspace root to find `.commit-gen.json`).');
+	await vscode.window.withProgress(
+		{
+			location: vscode.ProgressLocation.Notification,
+			title: 'Commit Gen',
+			cancellable: false,
+		},
+		async (progress) => {
+			try {
+				const folder = getBestWorkspaceFolder();
+				if (!folder) {
+					throw new UserFacingError('Open a folder/workspace first (Commit Gen needs a workspace root to find `.commit-gen.json`).');
+				}
+
+				progress.report({ message: 'Reading config and changes…' });
+				const resolvedConfig = await loadCommitGenConfig(folder.uri.fsPath);
+				const settings = getCommitGenSettings();
+
+				const git = await getGitContext(folder.uri.fsPath, settings.maxDiffChars);
+				if (!git.diff.trim()) {
+					throw new UserFacingError('No changes found to generate a commit message for.');
+				}
+
+				progress.report({ message: 'Generating commit message…' });
+				const finalMessage = await generateWithValidationAndRetry({
+					settings,
+					config: resolvedConfig,
+					diff: git.diff,
+					statusSummary: git.statusSummary,
+					diffKind: git.diffKind,
+				});
+
+				progress.report({ message: 'Inserting…' });
+				const method = await presentCommitMessage(finalMessage);
+				const doneMsg =
+					method === 'clipboard'
+						? 'Copied to clipboard (could not access commit input).'
+						: 'Inserted into commit message box.';
+				progress.report({ message: doneMsg });
+				await delay(1200);
+			} catch (err) {
+				const msg = renderTransientError(err);
+				progress.report({ message: `Failed: ${msg}` });
+				await delay(3500);
+			}
+		},
+	);
+}
+
+function delay(ms: number): Promise<void> {
+	return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function renderTransientError(err: unknown): string {
+	if (err instanceof UserFacingError) {
+		return err.message;
 	}
+	const e = err instanceof Error ? err : new Error(String(err));
+	const out = getOutputChannel();
+	out.appendLine(`[${new Date().toISOString()}] Commit Gen error`);
+	out.appendLine(e.stack || e.message);
+	out.appendLine('');
+	return 'Unexpected error (see Output: Commit Gen).';
+}
 
-	const resolvedConfig = await loadCommitGenConfig(folder.uri.fsPath);
-	const settings = getCommitGenSettings();
-
-	const git = await getGitContext(folder.uri.fsPath, settings.maxDiffChars);
-	if (!git.diff.trim()) {
-		throw new UserFacingError('No changes found to generate a commit message for.');
+let outputChannel: vscode.OutputChannel | undefined;
+function getOutputChannel(): vscode.OutputChannel {
+	if (!outputChannel) {
+		outputChannel = vscode.window.createOutputChannel('Commit Gen');
 	}
-
-	const finalMessage = await generateWithValidationAndRetry({
-		settings,
-		config: resolvedConfig,
-		diff: git.diff,
-		statusSummary: git.statusSummary,
-		diffKind: git.diffKind,
-	});
-
-	await presentCommitMessage(finalMessage);
+	return outputChannel;
 }
 
 async function generateWithValidationAndRetry(opts: {
@@ -180,13 +228,12 @@ async function callAnthropicOrThrow(opts: { settings: CommitGenSettings; system:
 	}
 }
 
-async function presentCommitMessage(message: string): Promise<void> {
+async function presentCommitMessage(message: string): Promise<'scm' | 'git' | 'clipboard'> {
 	const inputBox = vscode.scm?.inputBox;
 	if (inputBox) {
 		try {
 			inputBox.value = message;
-			await vscode.window.showInformationMessage('Commit message generated!');
-			return;
+			return 'scm';
 		} catch {
 			// Fall through to clipboard/editor fallback below.
 		}
@@ -194,19 +241,11 @@ async function presentCommitMessage(message: string): Promise<void> {
 
 	const insertedViaGit = await tryInsertViaGitExtension(message);
 	if (insertedViaGit) {
-		await vscode.window.showInformationMessage('Commit message generated!');
-		return;
+		return 'git';
 	}
 
 	await vscode.env.clipboard.writeText(message);
-	const action = await vscode.window.showInformationMessage(
-		'Commit message generated. Source Control input is unavailable, so it was copied to clipboard.',
-		'Open in Editor',
-	);
-	if (action === 'Open in Editor') {
-		const doc = await vscode.workspace.openTextDocument({ content: message, language: 'git-commit' });
-		await vscode.window.showTextDocument(doc, { preview: true });
-	}
+	return 'clipboard';
 }
 
 async function tryInsertViaGitExtension(message: string): Promise<boolean> {
