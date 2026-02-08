@@ -66,7 +66,7 @@ export async function runGenerateCommitMessageCommand(): Promise<void> {
 			try {
 				const folder = getBestWorkspaceFolder();
 				if (!folder) {
-					throw new UserFacingError('Open a folder/workspace first (Commit Gen needs workspace settings).');
+					throw new UserFacingError('Open a folder/workspace first.');
 				}
 
 				progress.report({ message: 'Reading config and changes…' });
@@ -75,7 +75,7 @@ export async function runGenerateCommitMessageCommand(): Promise<void> {
 
 				const git = await getGitContext(folder.uri.fsPath, settings.maxDiffChars);
 				if (!git.diff.trim()) {
-					throw new UserFacingError('No changes found to generate a commit message for.');
+					throw new UserFacingError('No changes found.');
 				}
 
 				progress.report({ message: 'Generating commit message…' });
@@ -91,8 +91,8 @@ export async function runGenerateCommitMessageCommand(): Promise<void> {
 				const method = await presentCommitMessage(finalMessage);
 				const doneMsg =
 					method === 'clipboard'
-						? 'Copied to clipboard (could not access commit input).'
-						: 'Inserted into commit message box.';
+						? 'Copied to clipboard.'
+						: 'Inserted commit message.';
 				progress.report({ message: doneMsg });
 				await delay(1200);
 			} catch (err) {
@@ -612,6 +612,7 @@ function buildSystemPrompt(opts: {
 		scopeRule,
 		breakingRule,
 		`Subject MUST be imperative mood, concise, and <= ${opts.maxSubjectLength} characters.`,
+		'Body should use third-person singular present tense ("adds", not "add") and may be omitted for trivial changes.',
 	];
 
 	if (opts.promptHints.length > 0) {
