@@ -2,7 +2,7 @@
   "name": "commit-gen",
   "displayName": "commit-gen",
   "description": "AI commit message generator",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "publisher": "dannystewart",
   "repository": {
     "type": "git",
@@ -23,6 +23,16 @@
         "icon": "$(sparkle)"
       },
       {
+        "command": "commit-gen.commitStagedAmend",
+        "title": "Commit Gen: Commit Staged (Amend)",
+        "icon": "$(git-commit)"
+      },
+      {
+        "command": "commit-gen.commitAllAmendAndForcePush",
+        "title": "Commit Gen: Git Commit All (Amend) and Push (Force)",
+        "icon": "$(cloud-upload)"
+      },
+      {
         "command": "commit-gen.openOutput",
         "title": "Commit Gen: Open Output",
         "icon": "$(output)"
@@ -38,7 +48,16 @@
       "scm/title": [
         {
           "command": "commit-gen.generateCommitMessage",
-          "group": "navigation"
+          "group": "navigation@10"
+        },
+        {
+          "command": "commit-gen.commitStagedAmend",
+          "group": "navigation@20"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "commit-gen.commitAllAmendAndForcePush"
         }
       ]
     },
