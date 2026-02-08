@@ -1,0 +1,81 @@
+{
+  "name": "commit-gen",
+  "displayName": "commit-gen",
+  "description": "AI commit message generator",
+  "version": "0.0.1",
+  "publisher": "dannystewart",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dannystewart/commit-gen"
+  },
+  "engines": {
+    "vscode": "^1.105.1"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "commit-gen.generateCommitMessage",
+        "title": "Commit Gen: Generate Commit Message",
+        "icon": "$(sparkle)"
+      }
+    ],
+    "menus": {
+      "scm/inputBox": [
+        {
+          "command": "commit-gen.generateCommitMessage",
+          "group": "inline"
+        }
+      ],
+      "scm/title": [
+        {
+          "command": "commit-gen.generateCommitMessage",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Commit Gen",
+      "properties": {
+        "commitGen.anthropicApiKey": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Anthropic API key used to generate commit messages. If empty, `ANTHROPIC_API_KEY` will be used."
+        },
+        "commitGen.anthropicModel": {
+          "type": "string",
+          "default": "claude-sonnet-4-5",
+          "description": "Anthropic model ID to use."
+        },
+        "commitGen.maxDiffChars": {
+          "type": "number",
+          "default": 12000,
+          "minimum": 1000,
+          "maximum": 200000,
+          "description": "Maximum number of diff characters to include in the prompt (diff is truncated in the middle)."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.105.1",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "22.x",
+    "typescript-eslint": "^8.54.0",
+    "eslint": "^9.39.2",
+    "typescript": "^5.9.3",
+    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-electron": "^2.5.2"
+  }
+}
