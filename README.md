@@ -4,54 +4,28 @@ AI-powered commit message generator for VS Code and Cursor that creates high-qua
 
 ## Installation
 
-### Option A: Install from a VSIX (GitHub Releases)
-
-1. Download the latest `.vsix` from GitHub Releases.
-2. In VS Code / Cursor, open the Extensions view.
-3. Click the `...` menu and choose **Install from VSIX...**
-4. Select the downloaded file and reload the editor when prompted.
-
-### Option B: Install from the CLI
+Download the VSIX from GitHub and then open VS Code and go to **Extensions → Install from VSIX**, or you can install via the command line:
 
 ```bash
-code --install-extension /path/to/commit-gen-0.1.0.vsix
+code --install-extension commit-gen-0.1.0.vsix
 ```
 
 ## Features
 
 - **AI-Generated Commit Messages**: Uses Claude to analyze your staged or working changes and generate detailed, structured commit messages
 - **Conventional Commits**: Enforces the Conventional Commits format with customizable types and scopes
-- **Smart Validation**: Validates generated messages and automatically retries if they don't meet your project's standards
 - **Flexible Configuration**: Customize commit types, scopes, subject length, and add project-specific prompt hints
-- **Workspace-Aware**: Automatically detects the active workspace and git repository
+- **Smart Validation**: Validates generated messages and automatically retries if they don't meet your project's standards
 
 ## Usage
 
-### Generate Commit Message
+Run the **Commit Gen: Generate Commit Message** command from either the Command Palette or the sparkle icon in the Source Control view. It will analyze your staged changes (or working tree if nothing is staged), generate a message, and insert it into the commit message box.
 
-Run the **Commit Gen: Generate Commit Message** command from:
-
-- The Command Palette (`Cmd+Shift+P` / `Ctrl+Shift+P`)
-- The sparkle icon in the Source Control view
-- The inline sparkle icon in the commit message input box
-
-The extension will:
-
-1. Analyze your staged changes (or working tree if nothing is staged)
-2. Generate a Conventional Commit message using Claude
-3. Insert it into the commit message box
+Note that you must supply `commitGen.anthropicApiKey` or use the `ANTHROPIC_API_KEY` environment variable.
 
 ## Configuration
 
-Configure Commit Gen through VS Code/Cursor settings or your workspace's `.vscode/settings.json` -
-
-### API Settings
-
-- `commitGen.anthropicApiKey` - Your Anthropic API key (optional if using `ANTHROPIC_API_KEY` env var)
-- `commitGen.anthropicModel` - AI model to use (default: `claude-sonnet-4-5`)
-- `commitGen.maxDiffChars` - Maximum diff characters to send to the API (default: `20000`)
-
-### Commit Format
+Configure Commit Gen through VS Code/Cursor settings or your workspace's `.vscode/settings.json`.
 
 - `commitGen.types` - Allowed commit types
   - Defaults: feat, fix, chore, docs, refactor, perf, test, build, ci, revert, style
