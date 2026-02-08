@@ -1,8 +1,8 @@
 {
   "name": "commit-gen",
   "displayName": "Commit Gen",
-  "description": "Generate AI commit messages with predefined scopes per project",
-  "version": "0.1.2",
+  "description": "Generate AI commit messages with defined scopes per workspace",
+  "version": "0.1.3",
   "icon": "media/icon.png",
   "publisher": "dannystewart",
   "repository": {
@@ -13,7 +13,7 @@
     "vscode": "^1.105.1"
   },
   "categories": [
-    "Other"
+    "SCM Providers"
   ],
   "main": "./out/extension.js",
   "contributes": {
