@@ -26,15 +26,25 @@ export class UserFacingError extends Error {
 	}
 }
 
-const DEFAULT_TYPES = ['feat', 'fix', 'chore', 'docs', 'refactor', 'perf', 'test', 'build', 'ci', 'revert', 'style'];
+const DEFAULT_TYPES = [
+	'feat',
+	'fix',
+	'chore',
+	'docs',
+	'refactor',
+	'perf',
+	'test',
+	'build',
+	'ci',
+	'revert',
+	'style',
+
+];
 const DEFAULT_SCOPES = [
 	'auth',
 	'config',
 	'data',
-	'integrations',
-	'nav',
 	'network',
-	'persistence',
 	'platform',
 	'security',
 	'state',
