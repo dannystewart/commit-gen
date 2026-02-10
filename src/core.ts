@@ -6,14 +6,14 @@ import { promisify } from 'node:util';
 
 const execFileAsync = promisify(execFile);
 
-export type CommitGenResolvedConfig = {
+export type ScopedCommitsResolvedConfig = {
 	scopes: string[];
 	types: string[];
 	promptHints: string[];
 	maxSubjectLength: number;
 };
 
-export type CommitGenSettings = {
+export type ScopedCommitsSettings = {
 	apiKey: string;
 	model: string;
 	maxDiffChars: number;
@@ -38,7 +38,7 @@ export async function runGenerateCommitMessageCommand(): Promise<void> {
 	await vscode.window.withProgress(
 		{
 			location: vscode.ProgressLocation.SourceControl,
-			title: 'Commit Gen',
+			title: 'Scoped Commits',
 			cancellable: false,
 		},
 		async (progress) => {
@@ -49,8 +49,8 @@ export async function runGenerateCommitMessageCommand(): Promise<void> {
 				}
 
 				progress.report({ message: 'Reading config and changes…' });
-				const resolvedConfig = loadCommitGenConfigFromWorkspace(folder);
-				const settings = getCommitGenSettings();
+				const resolvedConfig = loadScopedCommitsConfigFromWorkspace(folder);
+				const settings = getScopedCommitsSettings();
 
 				const git = await getGitContext(folder.uri.fsPath, settings.maxDiffChars);
 				if (!git.diff.trim()) {
@@ -78,7 +78,7 @@ export async function runGenerateCommitMessageCommand(): Promise<void> {
 				const { notificationText, outputText } = renderError(err);
 				if (outputText) {
 					const out = getOutputChannel();
-					out.appendLine(`[${new Date().toISOString()}] Commit Gen error`);
+					out.appendLine(`[${new Date().toISOString()}] Scoped Commits error`);
 					out.appendLine(outputText);
 					out.appendLine('');
 					void offerOpenOutputNotification();
@@ -104,7 +104,7 @@ function renderError(err: unknown): { notificationText: string; outputText?: str
 	}
 	const e = err instanceof Error ? err : new Error(String(err));
 	return {
-		notificationText: 'Unexpected error (see Output: Commit Gen).',
+		notificationText: 'Unexpected error (see Output: Scoped Commits).',
 		outputText: e.stack || e.message,
 	};
 }
@@ -114,7 +114,7 @@ function showStickyErrorNotification(message: string): void {
 	void vscode.window.withProgress(
 		{
 			location: vscode.ProgressLocation.Notification,
-			title: 'Commit Gen Error',
+			title: 'Scoped Commits Error',
 			cancellable: true,
 		},
 		(progress, token) =>
@@ -126,28 +126,28 @@ function showStickyErrorNotification(message: string): void {
 	);
 }
 
-function showCommitGenOutput(): void {
+function showScopedCommitsOutput(): void {
 	getOutputChannel().show(true);
 }
 
 async function offerOpenOutputNotification(): Promise<void> {
-	const action = await vscode.window.showInformationMessage('Commit Gen: error details are available in Output.', 'Open Output');
+	const action = await vscode.window.showInformationMessage('Scoped Commits: error details are available in Output.', 'Open Output');
 	if (action === 'Open Output') {
-		showCommitGenOutput();
+		showScopedCommitsOutput();
 	}
 }
 
 let outputChannel: vscode.OutputChannel | undefined;
 function getOutputChannel(): vscode.OutputChannel {
 	if (!outputChannel) {
-		outputChannel = vscode.window.createOutputChannel('Commit Gen');
+		outputChannel = vscode.window.createOutputChannel('Scoped Commits');
 	}
 	return outputChannel;
 }
 
 async function generateWithValidationAndRetry(opts: {
-	settings: CommitGenSettings;
-	config: CommitGenResolvedConfig;
+	settings: ScopedCommitsSettings;
+	config: ScopedCommitsResolvedConfig;
 	diff: string;
 	statusSummary: string;
 	diffKind: 'staged' | 'working';
@@ -231,7 +231,7 @@ async function generateWithValidationAndRetry(opts: {
 	throw new UserFacingError(`Generated message failed validation after retry: ${v2.reason}`);
 }
 
-async function callAnthropicOrThrow(opts: { settings: CommitGenSettings; system: string; userText: string }): Promise<string> {
+async function callAnthropicOrThrow(opts: { settings: ScopedCommitsSettings; system: string; userText: string }): Promise<string> {
 	try {
 		return await anthropicGenerateText({
 			apiKey: opts.settings.apiKey,
@@ -243,7 +243,7 @@ async function callAnthropicOrThrow(opts: { settings: CommitGenSettings; system:
 		});
 	} catch (err) {
 		if (err instanceof AnthropicError && err.statusCode === 401) {
-			throw new UserFacingError('Anthropic API key was rejected (401). Check `commitGen.anthropicApiKey` or `ANTHROPIC_API_KEY`.');
+			throw new UserFacingError('Anthropic API key was rejected (401). Check `scopedCommits.anthropicApiKey` or `ANTHROPIC_API_KEY`.');
 		}
 		throw err;
 	}
@@ -330,13 +330,13 @@ function pickBestRepoForPath(repositories: any[], folderPath: string): any | und
 	return best ?? repositories[0];
 }
 
-export function getCommitGenSettings(): CommitGenSettings {
-	const cfg = vscode.workspace.getConfiguration('commitGen');
+export function getScopedCommitsSettings(): ScopedCommitsSettings {
+	const cfg = vscode.workspace.getConfiguration('scopedCommits');
 	const apiKeyFromSettings = cfg.get<string>('anthropicApiKey')?.trim() ?? '';
 	const apiKeyFromEnv = (process.env['ANTHROPIC_API_KEY'] ?? '').trim();
 	const apiKey = apiKeyFromSettings || apiKeyFromEnv;
 	if (!apiKey) {
-		throw new UserFacingError('Missing Anthropic API key. Set `commitGen.anthropicApiKey` or env var `ANTHROPIC_API_KEY`.');
+		throw new UserFacingError('Missing Anthropic API key. Set `scopedCommits.anthropicApiKey` or env var `ANTHROPIC_API_KEY`.');
 	}
 
 	const model = (cfg.get<string>('anthropicModel') ?? 'claude-3-5-sonnet-latest').trim();
@@ -345,8 +345,8 @@ export function getCommitGenSettings(): CommitGenSettings {
 	return { apiKey, model, maxDiffChars };
 }
 
-function loadCommitGenConfigFromWorkspace(folder: vscode.WorkspaceFolder): CommitGenResolvedConfig {
-	const cfg = vscode.workspace.getConfiguration('commitGen', folder.uri);
+function loadScopedCommitsConfigFromWorkspace(folder: vscode.WorkspaceFolder): ScopedCommitsResolvedConfig {
+	const cfg = vscode.workspace.getConfiguration('scopedCommits', folder.uri);
 	const scopesRaw = cfg.get<unknown>('scopes');
 	const typesRaw = cfg.get<unknown>('types');
 	const promptHintsRaw = cfg.get<unknown>('promptHints');
@@ -354,12 +354,12 @@ function loadCommitGenConfigFromWorkspace(folder: vscode.WorkspaceFolder): Commi
 
 	const scopes = normalizeStringList(scopesRaw);
 	if (scopes.length === 0) {
-		throw new UserFacingError('`commitGen.scopes` is empty. Add at least one scope, or use "Reset This Setting" to restore defaults.');
+		throw new UserFacingError('`scopedCommits.scopes` is empty. Add at least one scope, or use "Reset This Setting" to restore defaults.');
 	}
 
 	const types = normalizeStringList(typesRaw);
 	if (types.length === 0) {
-		throw new UserFacingError('`commitGen.types` is empty. Add at least one type, or use "Reset This Setting" to restore defaults.');
+		throw new UserFacingError('`scopedCommits.types` is empty. Add at least one type, or use "Reset This Setting" to restore defaults.');
 	}
 
 	const promptHints = normalizeStringOrStringList(promptHintsRaw);

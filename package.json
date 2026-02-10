@@ -1,13 +1,13 @@
 {
-  "name": "commit-gen",
-  "displayName": "Commit Gen",
+  "name": "scoped-commits",
+  "displayName": "Scoped Commits",
   "description": "Generate AI commit messages with defined scopes per workspace",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "icon": "media/icon.png",
   "publisher": "dannystewart",
   "repository": {
     "type": "git",
-    "url": "https://github.com/dannystewart/commit-gen"
+    "url": "https://github.com/dannystewart/scoped-commits"
   },
   "engines": {
     "vscode": "^1.105.1"
@@ -19,64 +19,64 @@
   "contributes": {
     "commands": [
       {
-        "command": "commit-gen.generateCommitMessage",
-        "title": "Commit Gen: Generate Commit Message",
+        "command": "scoped-commits.generateCommitMessage",
+        "title": "Scoped Commits: Generate Commit Message",
         "icon": "$(sparkle)"
       }
     ],
     "menus": {
       "scm/inputBox": [
         {
-          "command": "commit-gen.generateCommitMessage",
+          "command": "scoped-commits.generateCommitMessage",
           "group": "inline"
         }
       ],
       "scm/title": [
         {
-          "command": "commit-gen.generateCommitMessage",
+          "command": "scoped-commits.generateCommitMessage",
           "group": "navigation"
         }
       ]
     },
     "configuration": {
-      "title": "Commit Gen",
+      "title": "Scoped Commits",
       "properties": {
-        "commitGen.scopes": {
+        "scopedCommits.scopes": {
           "type": "array",
           "items": { "type": "string" },
           "default": ["auth", "config", "data", "network", "platform", "security", "state", "sync", "ui"],
           "description": "Allowed scope/area names. Defaults to a broadly-applicable list; use \"Reset This Setting\" to restore defaults."
         },
-        "commitGen.types": {
+        "scopedCommits.types": {
           "type": "array",
           "items": { "type": "string" },
           "default": ["feat", "fix", "chore", "docs", "refactor", "perf", "test", "build", "ci", "revert", "style"],
           "description": "Allowed commit types. Defaults to a standard Conventional Commits set; use \"Reset This Setting\" to restore defaults."
         },
-        "commitGen.promptHints": {
+        "scopedCommits.promptHints": {
           "type": "array",
           "items": { "type": "string" },
           "default": [],
           "description": "Extra prompt rules for this workspace. Each entry is appended to the system prompt (style, definitions, conventions, etc.)."
         },
-        "commitGen.maxSubjectLength": {
+        "scopedCommits.maxSubjectLength": {
           "type": "number",
           "default": 80,
           "minimum": 40,
           "maximum": 120,
           "description": "Maximum commit subject length. Default is 80."
         },
-        "commitGen.anthropicApiKey": {
+        "scopedCommits.anthropicApiKey": {
           "type": "string",
           "default": "",
           "markdownDescription": "Anthropic API key used to generate commit messages. If empty, `ANTHROPIC_API_KEY` will be used."
         },
-        "commitGen.anthropicModel": {
+        "scopedCommits.anthropicModel": {
           "type": "string",
           "default": "claude-sonnet-4-5",
           "description": "Anthropic model ID to use."
         },
-        "commitGen.maxDiffChars": {
+        "scopedCommits.maxDiffChars": {
           "type": "number",
           "default": 20000,
           "minimum": 1000,

@@ -1,8 +1,8 @@
-# Commit Gen
+# Scoped Commits
 
-AI-powered commit message generator for VS Code and Cursor that creates high-quality Conventional Commit messages from your git diffs, with the ability to enforce scoping based on predetermined scopes per project.
+AI-powered Conventional Commit message generator for VS Code and Cursor with the ability to enforce predetermined scopes either globally or per workspace.
 
-Available from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=dannystewart.commit-gen).
+Available from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=dannystewart.scoped-commits).
 
 ## Features
 
@@ -13,32 +13,32 @@ Available from the [VS Code Marketplace](https://marketplace.visualstudio.com/it
 
 ## Usage
 
-Run the **Commit Gen: Generate Commit Message** command from either the Command Palette or the sparkle icon in the Source Control view. It will analyze your staged changes (or working tree if nothing is staged), generate a message, and insert it into the commit message box.
+Run the **Scoped Commits: Generate Commit Message** command from either the Command Palette or the sparkle icon in the Source Control view. It will analyze your staged changes (or working tree if nothing is staged), generate a message, and insert it into the commit message box.
 
-Note that you must supply `commitGen.anthropicApiKey` or use the `ANTHROPIC_API_KEY` environment variable.
+Note that you must supply `scopedCommits.anthropicApiKey` or use the `ANTHROPIC_API_KEY` environment variable.
 
 ## Configuration
 
-Configure Commit Gen through VS Code/Cursor settings or your workspace's `.vscode/settings.json`.
+Configure Scoped Commits through VS Code/Cursor settings or your workspace's `.vscode/settings.json`.
 
-- `commitGen.types` - Allowed commit types
+- `scopedCommits.types` - Allowed commit types
   - Defaults: feat, fix, chore, docs, refactor, perf, test, build, ci, revert, style
-- `commitGen.scopes` - Allowed scope/area names
+- `scopedCommits.scopes` - Allowed scope/area names
   - Default: auth, config, data, integrations, nav, network, persistence, platform, security, state, sync, ui
-- `commitGen.maxSubjectLength` - Maximum commit subject length (default: 80, range: 40-120)
+- `scopedCommits.maxSubjectLength` - Maximum commit subject length (default: 80, range: 40-120)
 
 ### Project-Specific Rules
 
-- `commitGen.promptHints` - Array of additional prompt rules for your workspace (e.g., style preferences, definitions, conventions)
+- `scopedCommits.promptHints` - Array of additional prompt rules for your workspace (e.g., style preferences, definitions, conventions)
 
 ### Example Configuration
 
 ```json
 {
-  "commitGen.types": ["feat", "fix", "docs", "refactor"],
-  "commitGen.scopes": ["api", "ui", "db", "auth"],
-  "commitGen.maxSubjectLength": 72,
-  "commitGen.promptHints": [
+  "scopedCommits.types": ["feat", "fix", "docs", "refactor"],
+  "scopedCommits.scopes": ["api", "ui", "db", "auth"],
+  "scopedCommits.maxSubjectLength": 72,
+  "scopedCommits.promptHints": [
     "Use past tense for database migrations",
     "Reference ticket numbers when available"
   ]

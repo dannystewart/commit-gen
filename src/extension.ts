@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { runGenerateCommitMessageCommand } from './core';
 
 export function activate(context: vscode.ExtensionContext) {
-	const generate = vscode.commands.registerCommand('commit-gen.generateCommitMessage', async () => {
+	const generate = vscode.commands.registerCommand('scoped-commits.generateCommitMessage', async () => {
 		await runGenerateCommitMessageCommand();
 	});
 
