@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
+## [0.2.3] (2026-02-12)
+
+### Fixed
+
+- Improves SCM context detection to properly support multi-root workspaces, allowing commit message generation to work correctly when invoked from specific repository views or SCM UI actions.
+
 ## [0.2.2] (2026-02-11)
 
 ### Added
@@ -60,7 +66,8 @@ Initial release (basically).
 [Semantic Versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[unreleased]: https://github.com/dannystewart/scoped-commits/compare/v0.2.2...HEAD
+[unreleased]: https://github.com/dannystewart/scoped-commits/compare/v0.2.3...HEAD
+[0.2.3]: https://github.com/dannystewart/scoped-commits/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/dannystewart/scoped-commits/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/dannystewart/scoped-commits/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/dannystewart/commit-gen/compare/v0.1.3...v0.2.0
