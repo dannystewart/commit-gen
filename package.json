@@ -2,7 +2,7 @@
   "name": "scoped-commits",
   "displayName": "Scoped Commits",
   "description": "Generate AI commit messages with predefined scopes",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "icon": "media/icon.png",
   "publisher": "dannystewart",
   "repository": {
@@ -49,17 +49,44 @@
     "configuration": {
       "title": "Scoped Commits",
       "properties": {
-        "scopedCommits.scopes": {
-          "type": "array",
-          "items": { "type": "string" },
-          "default": ["auth", "config", "data", "network", "platform", "security", "state", "sync", "ui"],
-          "description": "Allowed scope/area names. Defaults to a broadly-applicable list; use \"Reset This Setting\" to restore defaults."
-        },
         "scopedCommits.types": {
           "type": "array",
           "items": { "type": "string" },
-          "default": ["feat", "fix", "chore", "docs", "refactor", "perf", "test", "build", "ci", "revert", "style"],
+          "default": [
+            "feat",
+            "fix",
+            "chore",
+            "docs",
+            "refactor",
+            "perf",
+            "test",
+            "build",
+            "ci",
+            "revert",
+            "style"
+          ],
           "description": "Allowed commit types. Defaults to a standard Conventional Commits set; use \"Reset This Setting\" to restore defaults."
+        },
+        "scopedCommits.scopes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [
+            "agents",
+            "auth",
+            "changelog",
+            "config",
+            "data",
+            "deps",
+            "network",
+            "platform",
+            "readme",
+            "security",
+            "state",
+            "sync",
+            "ui",
+            "workspace"
+          ],
+          "description": "Allowed scope/area names. Defaults to a broadly-applicable list; use \"Reset This Setting\" to restore defaults."
         },
         "scopedCommits.promptHints": {
           "type": "array",
