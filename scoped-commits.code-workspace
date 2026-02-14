@@ -5,6 +5,19 @@
 		}
 	],
 	"settings": {
+		"scopedCommits.scopes": [
+			"agents",
+			"changelog",
+			"config",
+			"data",
+			"package",
+			"platform",
+			"prompt",
+			"readme",
+			"security",
+			"ui",
+			"workspace",
+		],
 		"typescript.tsc.autoDetect": "off"
 	}
 }
