@@ -15,7 +15,7 @@ Available from the [VS Code Marketplace](https://marketplace.visualstudio.com/it
 
 Run the **Scoped Commits: Generate Commit Message** command from either the Command Palette or the sparkle icon in the Source Control view. It will analyze your staged changes (or working tree if nothing is staged), generate a message, and insert it into the commit message box.
 
-Note that you must supply `scopedCommits.anthropicApiKey` or use the `ANTHROPIC_API_KEY` environment variable.
+Note that you must supply an API key via `scopedCommits.apiKey` (Anthropic or OpenAI) or an environment variable (`SCOPED_COMMITS_API_KEY`, `ANTHROPIC_API_KEY`, or `OPENAI_API_KEY`).
 
 ## Configuration
 
@@ -26,6 +26,11 @@ Configure Scoped Commits through VS Code/Cursor settings or your workspace's `.v
 - `scopedCommits.scopes` - Allowed scope/area names
   - Default: auth, config, data, integrations, nav, network, persistence, platform, security, state, sync, ui
 - `scopedCommits.maxSubjectLength` - Maximum commit subject length (default: 80, range: 40-120)
+- `scopedCommits.apiKey` - API key used to generate commit messages (either Anthropic or OpenAI)
+  - Anthropic keys typically start with `sk-ant-`
+  - OpenAI keys typically start with `sk-` (including `sk-proj-`)
+- `scopedCommits.openaiModel` - OpenAI model ID to use (default: `gpt-5-mini`)
+- `scopedCommits.anthropicModel` - Anthropic model ID to use (default: `claude-sonnet-4-5`)
 
 ### Project-Specific Rules
 

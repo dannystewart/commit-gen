@@ -72,18 +72,28 @@
           "items": { "type": "string" },
           "default": [
             "agents",
+            "api",
             "auth",
             "changelog",
+            "cli",
             "comments",
-            "config",
-            "data",
+            "core",
+            "db",
             "deps",
+            "license",
+            "logging",
+            "models",
             "network",
             "platform",
             "readme",
+            "release",
+            "schema",
+            "scripts",
             "security",
             "state",
+            "storage",
             "sync",
+            "types",
             "ui",
             "workspace"
           ],
@@ -113,15 +123,20 @@
           "maximum": 120,
           "description": "Maximum commit subject length. Default is 80."
         },
-        "scopedCommits.anthropicApiKey": {
+        "scopedCommits.apiKey": {
           "type": "string",
           "default": "",
-          "markdownDescription": "Anthropic API key used to generate commit messages. If empty, `ANTHROPIC_API_KEY` will be used."
+          "markdownDescription": "API key used to generate commit messages. Can be either Anthropic (`sk-ant-...`) or OpenAI (`sk-...`). If empty, environment variables will be used."
         },
         "scopedCommits.anthropicModel": {
           "type": "string",
           "default": "claude-sonnet-4-5",
           "description": "Anthropic model ID to use."
+        },
+        "scopedCommits.openaiModel": {
+          "type": "string",
+          "default": "gpt-5-mini",
+          "description": "OpenAI model ID to use."
         },
         "scopedCommits.maxDiffChars": {
           "type": "number",

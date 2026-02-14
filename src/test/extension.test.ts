@@ -9,6 +9,7 @@ import {
 	stagedOnlyStatusFromPorcelainV1,
 	parseUntrackedFilesFromPorcelainV1,
 	validateCommitMessage,
+	detectProviderFromApiKey,
 } from '../core';
 
 suite('Extension Test Suite', () => {
@@ -138,5 +139,18 @@ suite('Extension Test Suite', () => {
 			stagedOnlyStatusFromPorcelainV1(status),
 			['M  both.ts', 'M  staged-only.ts', 'R  old name.ts -> new name.ts'].join('\n'),
 		);
+	});
+
+	test('detectProviderFromApiKey: detects Anthropic vs OpenAI by key prefix', () => {
+		assert.strictEqual(detectProviderFromApiKey(''), null);
+		assert.strictEqual(detectProviderFromApiKey('   '), null);
+
+		assert.strictEqual(detectProviderFromApiKey('sk-ant-123'), 'anthropic');
+		assert.strictEqual(detectProviderFromApiKey('sk-ant-api03-abc'), 'anthropic');
+
+		assert.strictEqual(detectProviderFromApiKey('sk-123'), 'openai');
+		assert.strictEqual(detectProviderFromApiKey('sk-proj-abc'), 'openai');
+
+		assert.strictEqual(detectProviderFromApiKey('not-a-key'), null);
 	});
 });

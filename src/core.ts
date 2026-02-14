@@ -1,11 +1,14 @@
 import * as vscode from 'vscode';
 import * as path from 'node:path';
 import { anthropicGenerateText, AnthropicError } from './anthropic';
+import { openaiGenerateText, OpenAIError } from './openai';
 import { buildSystemPrompt, type ScopeRequirement } from './systemPrompt';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
 const execFileAsync = promisify(execFile);
+
+export type LlmProvider = 'anthropic' | 'openai';
 
 export type ScopedCommitsResolvedConfig = {
 	scopes: string[];
@@ -16,10 +19,25 @@ export type ScopedCommitsResolvedConfig = {
 };
 
 export type ScopedCommitsSettings = {
+	provider: LlmProvider;
 	apiKey: string;
 	model: string;
 	maxDiffChars: number;
 };
+
+export function detectProviderFromApiKey(apiKey: string): LlmProvider | null {
+	const key = apiKey.trim();
+	if (!key) {
+		return null;
+	}
+	if (key.startsWith('sk-ant-')) {
+		return 'anthropic';
+	}
+	if (key.startsWith('sk-')) {
+		return 'openai';
+	}
+	return null;
+}
 
 export class UserFacingError extends Error {
 	public constructor(message: string) {
@@ -301,7 +319,7 @@ async function generateWithValidationAndRetry(opts: {
 		diffKind: opts.diffKind,
 	});
 
-	const first = await callAnthropicOrThrow({
+	const first = await callProviderOrThrow({
 		settings: opts.settings,
 		system: baseSystem,
 		userText: baseUser,
@@ -342,7 +360,7 @@ async function generateWithValidationAndRetry(opts: {
 		firstNormalized,
 	].join('\n');
 
-	const second = await callAnthropicOrThrow({
+	const second = await callProviderOrThrow({
 		settings: opts.settings,
 		system: retrySystem,
 		userText: retryUser,
@@ -371,8 +389,19 @@ async function generateWithValidationAndRetry(opts: {
 	throw new UserFacingError(`Generated message failed validation after retry: ${v2.reason}`);
 }
 
-async function callAnthropicOrThrow(opts: { settings: ScopedCommitsSettings; system: string; userText: string }): Promise<string> {
+async function callProviderOrThrow(opts: { settings: ScopedCommitsSettings; system: string; userText: string }): Promise<string> {
 	try {
+		if (opts.settings.provider === 'openai') {
+			return await openaiGenerateText({
+				apiKey: opts.settings.apiKey,
+				model: opts.settings.model,
+				system: opts.system,
+				userText: opts.userText,
+				maxTokens: 450,
+				temperature: 0.2,
+			});
+		}
+
 		return await anthropicGenerateText({
 			apiKey: opts.settings.apiKey,
 			model: opts.settings.model,
@@ -382,8 +411,18 @@ async function callAnthropicOrThrow(opts: { settings: ScopedCommitsSettings; sys
 			temperature: 0.2,
 		});
 	} catch (err) {
-		if (err instanceof AnthropicError && err.statusCode === 401) {
-			throw new UserFacingError('Anthropic API key was rejected (401). Check `scopedCommits.anthropicApiKey` or `ANTHROPIC_API_KEY`.');
+		if (opts.settings.provider === 'anthropic') {
+			if (err instanceof AnthropicError && err.statusCode === 401) {
+				throw new UserFacingError(
+					'Anthropic API key was rejected (401). Check `scopedCommits.apiKey`, legacy `scopedCommits.anthropicApiKey`, or env `SCOPED_COMMITS_API_KEY`/`ANTHROPIC_API_KEY`.',
+				);
+			}
+		} else {
+			if (err instanceof OpenAIError && err.statusCode === 401) {
+				throw new UserFacingError(
+					'OpenAI API key was rejected (401). Check `scopedCommits.apiKey` or env `SCOPED_COMMITS_API_KEY`/`OPENAI_API_KEY`.',
+				);
+			}
 		}
 		throw err;
 	}
@@ -490,17 +529,36 @@ function pickBestRepoForPath(repositories: any[], folderPath: string): any | und
 
 export function getScopedCommitsSettings(): ScopedCommitsSettings {
 	const cfg = vscode.workspace.getConfiguration('scopedCommits');
+	const apiKeyFromUnifiedSettings = cfg.get<string>('apiKey')?.trim() ?? '';
 	const apiKeyFromSettings = cfg.get<string>('anthropicApiKey')?.trim() ?? '';
+	const apiKeyFromUnifiedEnv = (process.env['SCOPED_COMMITS_API_KEY'] ?? '').trim();
 	const apiKeyFromEnv = (process.env['ANTHROPIC_API_KEY'] ?? '').trim();
-	const apiKey = apiKeyFromSettings || apiKeyFromEnv;
+	const apiKeyFromOpenAiEnv = (process.env['OPENAI_API_KEY'] ?? '').trim();
+	const apiKey =
+		apiKeyFromUnifiedSettings ||
+		apiKeyFromSettings ||
+		apiKeyFromUnifiedEnv ||
+		apiKeyFromEnv ||
+		apiKeyFromOpenAiEnv;
 	if (!apiKey) {
-		throw new UserFacingError('Missing Anthropic API key. Set `scopedCommits.anthropicApiKey` or env var `ANTHROPIC_API_KEY`.');
+		throw new UserFacingError(
+			'Missing API key. Set `scopedCommits.apiKey` (Anthropic or OpenAI), or env var `SCOPED_COMMITS_API_KEY`, or legacy `scopedCommits.anthropicApiKey`, or `ANTHROPIC_API_KEY`/`OPENAI_API_KEY`.',
+		);
 	}
 
-	const model = (cfg.get<string>('anthropicModel') ?? 'claude-3-5-sonnet-latest').trim();
+	const provider = detectProviderFromApiKey(apiKey);
+	if (!provider) {
+		throw new UserFacingError(
+			'Unrecognized API key format. Expected an Anthropic key starting with "sk-ant-" or an OpenAI key starting with "sk-".',
+		);
+	}
+
+	const anthropicModel = (cfg.get<string>('anthropicModel') ?? 'claude-sonnet-4-5').trim();
+	const openaiModel = (cfg.get<string>('openaiModel') ?? 'gpt-5-mini').trim();
+	const model = provider === 'openai' ? openaiModel : anthropicModel;
 	const maxDiffChars = clampInt(cfg.get<number>('maxDiffChars') ?? 12000, 1000, 200000);
 
-	return { apiKey, model, maxDiffChars };
+	return { provider, apiKey, model, maxDiffChars };
 }
 
 function loadScopedCommitsConfigFromWorkspace(folder: vscode.WorkspaceFolder): ScopedCommitsResolvedConfig {
