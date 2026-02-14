@@ -74,6 +74,7 @@
             "agents",
             "auth",
             "changelog",
+            "comments",
             "config",
             "data",
             "deps",

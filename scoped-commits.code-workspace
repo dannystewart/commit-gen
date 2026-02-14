@@ -8,6 +8,7 @@
 		"scopedCommits.scopes": [
 			"agents",
 			"changelog",
+			"comments",
 			"config",
 			"data",
 			"package",
