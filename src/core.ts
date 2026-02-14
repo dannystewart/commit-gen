@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'node:path';
 import { anthropicGenerateText, AnthropicError } from './anthropic';
+import { buildSystemPrompt } from './systemPrompt';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
@@ -692,41 +693,6 @@ async function execGit(args: string[], cwd: string, opts?: { allowExitCode1?: bo
 		const msg = stderr || e.message || 'git command failed';
 		throw new UserFacingError(`git ${args.join(' ')} failed: ${msg}`);
 	}
-}
-
-function buildSystemPrompt(opts: {
-	allowedTypes: string[];
-	allowedScopes: string[];
-	maxSubjectLength: number;
-	promptHints: string[];
-}): string {
-	const typeList = opts.allowedTypes.map((t) => `- ${t}`).join('\n');
-	const scopeList = opts.allowedScopes.map((s) => `- ${s}`).join('\n');
-
-	const rulesLines = [
-		'You MUST output a valid Conventional Commit message.',
-		'Output only the commit message text. No code fences, no extra commentary.',
-		'',
-		'You MUST choose a type ONLY from this allowed list:',
-		typeList,
-		'',
-		'You MUST choose a scope ONLY from this allowed list:',
-		scopeList,
-		'',
-		'Scope is REQUIRED. Header MUST be: type(scope): subject',
-		`Subject MUST be imperative mood, concise, and <= ${opts.maxSubjectLength} characters.`,
-		'Body should use third-person singular present tense ("adds", not "add") and may be omitted for trivial changes.',
-		'Do NOT include Markdown formatting, and do NOT manually wrap paragraphs with line breaks.',
-	];
-
-	if (opts.promptHints.length > 0) {
-		rulesLines.push('', 'Additional project-specific rules:');
-		for (const hint of opts.promptHints) {
-			rulesLines.push(`- ${hint}`);
-		}
-	}
-
-	return rulesLines.join('\n');
 }
 
 function buildUserPrompt(opts: { status: string; diff: string; diffKind: 'staged' | 'working' }): string {
