@@ -51,6 +51,7 @@ function buildSystemPromptConstraintsLines(opts: {
 const SYSTEM_PROMPT_STYLE_LINES = [
 	'Body should use third-person singular present tense ("adds", not "add") and may be omitted for trivial changes.',
 	'Do NOT include Markdown formatting, and do NOT manually wrap paragraphs with line breaks.',
+	'Always prefer "fix" over "feat" for bug fixes.',
 	'Use the "style" type for changes that do not affect the meaning of the code (whitespace, formatting, comment styling, etc).',
 ] as const;
 
